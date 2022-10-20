@@ -27,15 +27,19 @@ const isEmpty = (obj: Record<string, unknown>) => {
 const generateCommandLineUsage = () => {
   return commandLineUsage([
     {
-      header: 'Example Usage',
+      header: "Usage",
+      content: "jcli [-f PATH] [--file PATH] [-h] [--help]"
+    },
+    {
+      header: "Example Usages",
       content: "jcli -f file.json\njcli --file file.json"
     },
     {
-      header: 'Options',
+      header: "Available Commands",
       optionList: optionDefinitions
     },
     {
-      content: 'Project home: {underline https://github.com/ak-tr/jcli}'
+      content: "Project home: {underline https://github.com/ak-tr/jcli}"
     }
   ]);
 };
