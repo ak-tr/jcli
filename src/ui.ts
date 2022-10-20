@@ -57,10 +57,13 @@ export class UI {
       }
 
       const openingChar = getOpeningChar(content);
-      const indexOfOpeningChar = content.indexOf(openingChar);
 
       const matchedClosingChar = getMatchedClosingChar(openingChar);
       const closingCharIndex = getIndexOfClosingChar(list, index, openingChar, matchedClosingChar);
+
+      list.spliceItem(index + 1, closingCharIndex - (index));
+      list.setItem(item, `${content} ... ${matchedClosingChar}`);
+      this.screen.render();
     });
 
     [list, infoBar].forEach((widget) => this.screen.append(widget));
