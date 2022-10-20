@@ -46,7 +46,21 @@ export class UI {
     });
 
     list.on("select", (item) => {
-      this.screen.log(list.getItemIndex(item), list.getItem(item).content);
+      // Index of selected item
+      const index = list.getItemIndex(item);
+      // Content of selected item
+      const content = list.getItem(index).content;
+
+      // If no opening curly brace or square bracket, guard
+      if (![Char.BraceOpen, Char.BracketOpen].some((br) => content.includes(br))) {
+        return;
+      }
+
+      const openingChar = getOpeningChar(content);
+      const indexOfOpeningChar = content.indexOf(openingChar);
+
+      const matchedClosingChar = getMatchedClosingChar(openingChar);
+      const closingCharIndex = getIndexOfClosingChar(list, index, openingChar, matchedClosingChar);
     });
 
     [list, infoBar].forEach((widget) => this.screen.append(widget));
@@ -91,6 +105,39 @@ export class UI {
 enum Key {
   Down = "down",
   Up = "up",
+}
+
+enum Char {
+  BraceOpen = "{",
+  BraceClose = "}",
+  BracketOpen = "[",
+  BracketClose = "]",
+}
+
+const getIndexOfClosingChar = (list: blessed.Widgets.ListElement, index: number, openingChar: Char, closingChar: Char) => {
+  const counts = {
+    open: 1,
+    close: 0,
+  }
+
+  while (counts.open != counts.close) {
+    const content = list.getItem(++index).content;
+    
+    counts.open += content.includes(openingChar) ? 1 : 0;
+    counts.close += content.includes(closingChar) ? 1 : 0;
+  }
+
+  return index;
+}
+
+const getOpeningChar = (content: string) => {
+  if (content.includes(Char.BraceOpen)) return Char.BraceOpen;
+  else return Char.BracketOpen;
+}
+
+const getMatchedClosingChar = (symbol: Char) => {
+  if (symbol == Char.BraceOpen) return Char.BraceClose
+  else return Char.BracketClose
 }
 
 const getInfoBarContentString = (listIndex: number, fileName: string) => {
