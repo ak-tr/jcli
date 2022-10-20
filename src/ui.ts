@@ -21,11 +21,9 @@ export class UI {
 
     this.linesFromFile = linesFromFile;
     this.fileName = fileName;
+  
     this.maxIndex = linesFromFile.length + 1;
     this.listIndex = 1;
-
-    this.screen.log(linesFromFile.length);
-    this.screen.log(this.linesFromFile.length);
 
     this._showUI()
   }
@@ -35,12 +33,12 @@ export class UI {
     const infoBar = getInfoBar();
 
     // Set inital content
-    infoBar.setContent(`row: ${this.listIndex}{|}${this.fileName}`)
+    infoBar.setContent(getInfoBarContentString(this.listIndex, this.fileName))
 
     list.focus();
     list.key(["up", "down"], (_ch, key) => {
       this._updateListIndex(key.name);
-      infoBar.setContent(`row: ${this.listIndex}{|}${this.fileName}`)
+      infoBar.setContent(getInfoBarContentString(this.listIndex, this.fileName))
       this.screen.render();
     });
 
@@ -55,7 +53,6 @@ export class UI {
       return
     }
 
-    this.screen.log(this.listIndex, this.linesFromFile.length);
     // If EOF and key down don't update index
     if ((this.listIndex == this.maxIndex) && (keyEvent == Key.Down)) {
       return
@@ -68,4 +65,8 @@ export class UI {
 enum Key {
   Down = "down",
   Up = "up",
+}
+
+const getInfoBarContentString = (listIndex: number, fileName: string) => {
+  return `row: ${listIndex} (${listIndex - 1}){|}${fileName}`;
 }
