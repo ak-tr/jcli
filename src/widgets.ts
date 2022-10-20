@@ -4,15 +4,15 @@ export const getListWidget = (listItems: string[], rows: number) => {
   const listWidget = blessed.list({
     top: 0,
     width: "100%",
-    height: rows - 3,
+    height: rows - 1,
     items: listItems,
     keys: true,
     style: {
-			selected: {
-				bg: "white",
+      selected: {
+        bg: "white",
         fg: "black",
-			}
-		}
+      }
+    }
   })
 
   // Allow quit on Escape or Control-C or q.
@@ -30,6 +30,10 @@ export const getInfoBar = () => {
     style: {
       bg: "white",
       fg: "black",
+    },
+    padding: {
+      left: 1,
+      right: 1,
     },
     tags: true,
   })
