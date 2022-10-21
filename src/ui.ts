@@ -1,4 +1,5 @@
 import blessed from "blessed";
+import { FoldedLines, Line } from "./types";
 import { getIndexWidget, getInfoBar, getListWidget } from "./widgets";
 
 export class UI {
@@ -9,6 +10,7 @@ export class UI {
   maxIndex: number;
 
   listIndex: number;
+  foldedElements: FoldedLines[];
 
   constructor(fileName: string, linesFromFile: string[]) {
     // Create a screen object.
@@ -24,6 +26,7 @@ export class UI {
   
     this.maxIndex = linesFromFile.length;
     this.listIndex = 1;
+    this.foldedElements = [];
 
     this._showUI()
   }
@@ -53,6 +56,14 @@ export class UI {
       // Content of selected item
       const content = list.getItem(index).content;
 
+      const isLineFolded = this._checkIfLineIsFolded(index);
+      if (isLineFolded) {
+        this._unfoldLines(list, index);
+        list.select(index);
+        this.screen.render();
+        return;
+      }
+
       // If no opening curly brace or square bracket, guard
       if (![Char.BraceOpen, Char.BracketOpen].some((br) => content.includes(br))) {
         return;
@@ -63,6 +74,7 @@ export class UI {
       const matchedClosingChar = getMatchedClosingChar(openingChar);
       const closingCharIndex = getIndexOfClosingChar(list, index, openingChar, matchedClosingChar);
 
+      this._foldAndStoreLines(index, closingCharIndex - (index - 1));
       [list, indexBar].forEach((list) => list.spliceItem(index + 1, closingCharIndex - (index)));
       list.setItem(item, `${content} ... ${matchedClosingChar}`);
       this.screen.render();
@@ -97,6 +109,7 @@ export class UI {
       return this.listIndex = 1;
     }
 
+    // Hop 10 spaces in list
     if (ctrl) {
       // Value 9 because single key press already makes offset 1
       offset = keyEvent == Key.Down ? 9 : -9;
@@ -104,6 +117,35 @@ export class UI {
     }
 
     return this.listIndex += (keyEvent == Key.Up ? -1 : 1) + offset;
+  }
+
+  _foldAndStoreLines = (startingIndex: number, endingIndex: number) => {
+    const foldedLinesContent = this.linesFromFile.splice(startingIndex, endingIndex);
+    const foldedLines = foldedLinesContent.reduce((a, c, i) => {
+      a.push({
+        index: startingIndex + i,
+        content: c,
+      });
+      return a;
+    }, [] as Line[])
+
+    this.foldedElements.push({
+      startingIndex,
+      foldedLines,
+    })
+  }
+
+  _checkIfLineIsFolded = (index: number) => this.foldedElements.some((fe) => fe.startingIndex === index);
+
+  _unfoldLines = (list: blessed.Widgets.ListElement, startingIndex: number) => {
+    const foldedLines = this.foldedElements.find((fe) => fe.startingIndex === startingIndex);
+    const foldedContent = foldedLines?.foldedLines.map((fe) => fe.content as unknown as blessed.Widgets.TextElement);
+
+    if (foldedContent != undefined) {
+      list.spliceItem(startingIndex, 1, ...foldedContent)
+    }
+
+    this.foldedElements = this.foldedElements.filter((fe) => fe.startingIndex === startingIndex + 1);
   }
 }
 
