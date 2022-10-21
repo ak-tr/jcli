@@ -1,5 +1,5 @@
 import blessed from "blessed";
-import { getInfoBar, getListWidget } from "./widgets";
+import { getIndexWidget, getInfoBar, getListWidget } from "./widgets";
 
 export class UI {
   screen: blessed.Widgets.Screen;
@@ -22,14 +22,15 @@ export class UI {
     this.linesFromFile = linesFromFile;
     this.fileName = fileName;
   
-    this.maxIndex = linesFromFile.length + 1;
+    this.maxIndex = linesFromFile.length;
     this.listIndex = 1;
 
     this._showUI()
   }
 
   _showUI = () => {
-    const list = getListWidget(this.linesFromFile, this.screen.rows);
+    const list = getListWidget(this.linesFromFile, this.screen.rows, this.screen.cols);
+    const indexBar = getIndexWidget(this.maxIndex, this.screen.rows);
     const infoBar = getInfoBar();
 
     // Set inital content
@@ -42,6 +43,7 @@ export class UI {
     list.key(["up", "down", "C-down", "C-up"], (_ch, key) => {
       this._updateListIndex(key.name, key.ctrl, list);
       infoBar.setContent(getInfoBarContentString(this.listIndex, this.fileName))
+      indexBar.select(this.listIndex - 1);
       this.screen.render();
     });
 
@@ -61,12 +63,12 @@ export class UI {
       const matchedClosingChar = getMatchedClosingChar(openingChar);
       const closingCharIndex = getIndexOfClosingChar(list, index, openingChar, matchedClosingChar);
 
-      list.spliceItem(index + 1, closingCharIndex - (index));
+      [list, indexBar].forEach((list) => list.spliceItem(index + 1, closingCharIndex - (index)));
       list.setItem(item, `${content} ... ${matchedClosingChar}`);
       this.screen.render();
     });
 
-    [list, infoBar].forEach((widget) => this.screen.append(widget));
+    [list, indexBar, infoBar].forEach((widget) => this.screen.append(widget));
 
     this.screen.render();
   }

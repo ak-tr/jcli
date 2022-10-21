@@ -1,16 +1,21 @@
 import blessed from "blessed";
 
-export const getListWidget = (listItems: string[], rows: number) => {
+export const getListWidget = (listItems: string[], rows: number, cols: number) => {
   const listWidget = blessed.list({
     top: 0,
-    width: "100%",
+    right: 0,
+    width: cols - listItems.length.toString().length - 1,
     height: rows - 1,
     items: listItems,
     keys: true,
+    tags: true,
     style: {
       selected: {
         bg: "white",
         fg: "black",
+      },
+      item: {
+        bold: true,
       }
     }
   })
@@ -21,6 +26,24 @@ export const getListWidget = (listItems: string[], rows: number) => {
   });
 
   return listWidget;
+}
+
+export const getIndexWidget = (listLen: number, rows: number) => {
+  return blessed.list({
+    top: 0,
+    left: 0,
+    width: listLen.toString().length + 1,
+    height: rows - 1,
+    items: Array.from({ length: listLen }, (_v, k) => (k + 1).toString()),
+    style: {
+      selected: {
+        transparent: true,
+      },
+      item: {
+        transparent: true,
+      }
+    }
+  })
 }
 
 export const getInfoBar = () => {
