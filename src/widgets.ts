@@ -29,12 +29,13 @@ export const getListWidget = (listItems: string[], rows: number, cols: number) =
 }
 
 export const getIndexWidget = (listLen: number, rows: number) => {
+  const width = listLen.toString().length + 1;
   return blessed.list({
     top: 0,
     left: 0,
-    width: listLen.toString().length + 1,
+    width: width,
     height: rows - 1,
-    items: Array.from({ length: listLen }, (_v, k) => (k + 1).toString()),
+    items: Array.from({ length: listLen }, (_v, k) => (k + 1).toString().padStart(width - 1)),
     style: {
       selected: {
         transparent: true,
