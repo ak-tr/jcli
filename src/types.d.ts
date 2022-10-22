@@ -1,5 +1,6 @@
 export interface FoldedLines {
   startingIndex: number,
+  indexBarIndex: number,
   foldedLines: Line[]
 }
 
