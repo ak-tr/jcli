@@ -18,7 +18,7 @@ const optionDefinitions = [
   }
 ]
 
-const options = commandLineArgs(optionDefinitions);
+const options = commandLineArgs(optionDefinitions, {partial: true});
 
 const isEmpty = (obj: Record<string, unknown>) => {
   return Object.keys(obj).length == 0;
@@ -27,40 +27,71 @@ const isEmpty = (obj: Record<string, unknown>) => {
 const generateCommandLineUsage = () => {
   return commandLineUsage([
     {
+      content: `
+░░░░░██╗░█████╗░██╗░░░░░██╗
+░░░░░██║██╔══██╗██║░░░░░██║
+░░░░░██║██║░░╚═╝██║░░░░░██║
+██╗░░██║██║░░██╗██║░░░░░██║
+╚█████╔╝╚█████╔╝███████╗██║
+░╚════╝░░╚════╝░╚══════╝╚═╝
+
+JCLI is a command line tool to view JSON files.
+Refer to the usage below for further details.`,
+      raw: true,
+    },
+
+    {
       header: "Usage",
-      content: "jcli [-f PATH] [--file PATH] [-h] [--help]"
+      content: "$ jcli [PATH] [-f PATH] [--file PATH] [-h] [--help]",
     },
     {
       header: "Example Usages",
-      content: "jcli -f file.json\njcli --file file.json"
+      content: "$ jcli -f file.json\n$ jcli --file file.json",
     },
     {
       header: "Available Commands",
-      optionList: optionDefinitions
+      optionList: optionDefinitions,
     },
     {
-      content: "Project home: {underline https://github.com/ak-tr/jcli}"
+      content: "Project home: {underline https://github.com/ak-tr/jcli}",
     }
   ]);
 };
 
 const parseCommandLineArgs = async () => {
   if (isEmpty(options)) {
-    return console.log(generateCommandLineUsage())
+    return console.log("Unknown command, use --help for the usage guide")
   }
 
   if (options.help) {
     return console.log(generateCommandLineUsage());
   }
 
-  if (options.file) {
-    const fileName = options.file;
-    const lines = await readFile(fileName);
-    
-    // If lines exists
-    if (lines.length > 0) {
-      new UI(fileName, lines);
+  let fileName = "";
+
+  if (options._unknown !== undefined) {
+    if (options._unknown.length > 1 || !options._unknown[0].endsWith(".json")) {
+      return console.log("Invalid options, use --help for the usage guide");
     }
+    fileName = options._unknown[0];
+  }
+
+  if (options.file) {
+    if (!options.file.endsWith(".json")) {
+      return console.log("Invalid file type, use --help for the usage guide");
+    }
+    fileName = options.file;
+  }
+
+  if (fileName === "") {
+    return console.log("No file was provided, use --help for the usage guide");
+  }
+
+  const lines = await readFile(fileName);
+    
+  // If lines exists
+  if (lines.length > 0) {
+    new UI(fileName, lines);
   }
 };
 
