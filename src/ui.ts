@@ -11,6 +11,7 @@ export class UI {
   width: number;
 
   listIndex: number;
+  actualIndex: number;
   foldedElements: FoldedLines[];
 
   constructor(fileName: string, linesFromFile: string[]) {
@@ -20,6 +21,7 @@ export class UI {
       autoPadding: true,
       dockBorders: true,
       log: "log.txt",
+      debug: true,
     });
 
     this.linesFromFile = linesFromFile;
@@ -27,6 +29,7 @@ export class UI {
   
     this.maxIndex = linesFromFile.length;
     this.listIndex = 1;
+    this.actualIndex = 0;
     this.foldedElements = [];
     this.width = this.maxIndex.toString().length + 1;
 
@@ -46,7 +49,7 @@ export class UI {
 
     // Special key functions
     list.key(["up", "down", "S-down", "S-up"], (_ch, key) => {
-      this._updateListIndex(key.name, key.shift, list);
+      this._updateListIndex(key.name, key.shift, list, indexBar);
       infoBar.setContent(getInfoBarContentString(this.listIndex, this.fileName))
       indexBar.select(this.listIndex - 1);
 
@@ -87,7 +90,7 @@ export class UI {
     this.screen.render();
   }
 
-  _updateListIndex = (keyEvent: string, shift: boolean, list: blessed.Widgets.ListElement) => {
+  _updateListIndex = (keyEvent: string, shift: boolean, list: blessed.Widgets.ListElement, indexBar: blessed.Widgets.ListElement) => {
     let offset = 0;
 
     if ((this.listIndex == 1) && (keyEvent == Key.Up)) {
@@ -118,7 +121,9 @@ export class UI {
       list.move(offset);
     }
 
-    return this.listIndex += (keyEvent == Key.Up ? -1 : 1) + offset;
+    this.listIndex += (keyEvent == Key.Up ? -1 : 1) + offset;
+    this.actualIndex = +indexBar.getItem(this.listIndex).content;
+    return;
   }
 
   _foldAndStoreLines = (startingIndex: number, endingIndex: number) => {
@@ -138,16 +143,24 @@ export class UI {
     this.foldedElements.push({
       startingIndex,
       foldedLines,
+      indexBarIndex: this.actualIndex,
     })
   }
 
   _unfoldLines = (list: blessed.Widgets.ListElement, indexBar: blessed.Widgets.ListElement, startingIndex: number) => {
+    this.screen.log(this.foldedElements);
     const foldedLines = this.foldedElements.find((fe) => fe.startingIndex === startingIndex);
     const foldedContent = foldedLines?.foldedLines.map((fe) => {
       return fe.content as unknown as blessed.Widgets.TextElement
     });
-    const foldedIndexes = foldedLines?.foldedLines.map((fe) => {
-      return fe.index.toString().padStart(this.width - 1) as unknown as blessed.Widgets.TextElement
+
+    if (foldedLines === undefined) {
+      return;
+    }
+
+    const length = foldedLines.foldedLines.length;
+    const foldedIndexes = Array.from({ length }, (_v, k) => {
+      return (k + foldedLines.indexBarIndex - 1).toString().padStart(this.width - 1) as unknown as blessed.Widgets.TextElement
     });
     
     if (foldedContent != undefined && foldedIndexes != undefined) {
