@@ -45,10 +45,11 @@ export class UI {
     list.focus();
 
     // Special key functions
-    list.key(["up", "down", "C-down", "C-up"], (_ch, key) => {
-      this._updateListIndex(key.name, key.ctrl, list);
+    list.key(["up", "down", "S-down", "S-up"], (_ch, key) => {
+      this._updateListIndex(key.name, key.shift, list);
       infoBar.setContent(getInfoBarContentString(this.listIndex, this.fileName))
       indexBar.select(this.listIndex - 1);
+
       this.screen.render();
     });
 
@@ -86,7 +87,7 @@ export class UI {
     this.screen.render();
   }
 
-  _updateListIndex = (keyEvent: string, ctrl: boolean, list: blessed.Widgets.ListElement) => {
+  _updateListIndex = (keyEvent: string, shift: boolean, list: blessed.Widgets.ListElement) => {
     let offset = 0;
 
     if ((this.listIndex == 1) && (keyEvent == Key.Up)) {
@@ -99,19 +100,19 @@ export class UI {
     }
 
     // If less than 10 lines remaining to the end and ctrl is held, go to end
-    if ((keyEvent == Key.Down) && (this.listIndex >= this.maxIndex - 11) && ctrl) {
+    if ((keyEvent == Key.Down) && (this.listIndex >= this.maxIndex - 11) && shift) {
       list.select(this.maxIndex - 1);
       return this.listIndex = this.maxIndex;
     }
 
     // If less than 10 lines remaining to the beginning, go to end
-    if ((keyEvent == Key.Up) && (this.listIndex <= 11) && ctrl) {
+    if ((keyEvent == Key.Up) && (this.listIndex <= 11) && shift) {
       list.select(0);
       return this.listIndex = 1;
     }
 
     // Hop 10 spaces in list
-    if (ctrl) {
+    if (shift) {
       // Value 9 because single key press already makes offset 1
       offset = keyEvent == Key.Down ? 9 : -9;
       list.move(offset);
@@ -140,8 +141,6 @@ export class UI {
     })
   }
 
-  _checkIfLineIsFolded = (index: number) => this.foldedElements.some((fe) => fe.startingIndex === index);
-
   _unfoldLines = (list: blessed.Widgets.ListElement, indexBar: blessed.Widgets.ListElement, startingIndex: number) => {
     const foldedLines = this.foldedElements.find((fe) => fe.startingIndex === startingIndex);
     const foldedContent = foldedLines?.foldedLines.map((fe) => {
@@ -150,14 +149,16 @@ export class UI {
     const foldedIndexes = foldedLines?.foldedLines.map((fe) => {
       return fe.index.toString().padStart(this.width - 1) as unknown as blessed.Widgets.TextElement
     });
-
+    
     if (foldedContent != undefined && foldedIndexes != undefined) {
       list.spliceItem(startingIndex, 1, ...foldedContent)
       indexBar.spliceItem(startingIndex, 1, ...foldedIndexes)
     }
-
+    
     this.foldedElements = this.foldedElements.filter((fe) => fe.startingIndex === startingIndex - 1);
   }
+
+  _checkIfLineIsFolded = (index: number) => this.foldedElements.some((fe) => fe.startingIndex === index);
 }
 
 enum Key {
