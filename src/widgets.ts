@@ -37,11 +37,8 @@ export const getIndexWidget = (listLen: number, rows: number, width: number) => 
     items: Array.from({ length: listLen }, (_v, k) => (k).toString().padStart(width - 1)),
     style: {
       selected: {
-        transparent: true,
+        bold: true,
       },
-      item: {
-        transparent: true,
-      }
     }
   })
 }
