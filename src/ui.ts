@@ -58,12 +58,11 @@ export class UI {
       // Content of selected item
       const content = list.getItem(index).content;
 
-      const isLineFolded = this._checkIfLineIsFolded(index);
+      const isLineFolded = this._checkIfLineIsFolded(index);      
       if (isLineFolded) {
         this._unfoldLines(list, indexBar, index);
         list.select(index);
-        this.screen.render();
-        return;
+        return this.screen.render();
       }
 
       // If no opening curly brace or square bracket, guard
@@ -157,7 +156,7 @@ export class UI {
       indexBar.spliceItem(startingIndex, 1, ...foldedIndexes)
     }
 
-    this.foldedElements = this.foldedElements.filter((fe) => fe.startingIndex === startingIndex + 1);
+    this.foldedElements = this.foldedElements.filter((fe) => fe.startingIndex === startingIndex - 1);
   }
 }
 
