@@ -8,6 +8,7 @@ export class UI {
   fileName: string;
   linesFromFile: string[];
   maxIndex: number;
+  width: number;
 
   listIndex: number;
   foldedElements: FoldedLines[];
@@ -27,13 +28,14 @@ export class UI {
     this.maxIndex = linesFromFile.length;
     this.listIndex = 1;
     this.foldedElements = [];
+    this.width = this.maxIndex.toString().length + 1;
 
     this._showUI()
   }
 
   _showUI = () => {
     const list = getListWidget(this.linesFromFile, this.screen.rows, this.screen.cols);
-    const indexBar = getIndexWidget(this.maxIndex, this.screen.rows);
+    const indexBar = getIndexWidget(this.maxIndex, this.screen.rows, this.width);
     const infoBar = getInfoBar();
 
     // Set inital content
@@ -58,7 +60,7 @@ export class UI {
 
       const isLineFolded = this._checkIfLineIsFolded(index);
       if (isLineFolded) {
-        this._unfoldLines(list, index);
+        this._unfoldLines(list, indexBar, index);
         list.select(index);
         this.screen.render();
         return;
@@ -120,7 +122,11 @@ export class UI {
   }
 
   _foldAndStoreLines = (startingIndex: number, endingIndex: number) => {
-    const foldedLinesContent = this.linesFromFile.splice(startingIndex, endingIndex);
+    // Clone array to prevent mutation from slice prototype
+    const cloned = [...this.linesFromFile];
+    const foldedLinesContent = cloned.splice(startingIndex, endingIndex);
+
+    // Store lines in foldedLines variable to restore later...
     const foldedLines = foldedLinesContent.reduce((a, c, i) => {
       a.push({
         index: startingIndex + i,
@@ -137,12 +143,18 @@ export class UI {
 
   _checkIfLineIsFolded = (index: number) => this.foldedElements.some((fe) => fe.startingIndex === index);
 
-  _unfoldLines = (list: blessed.Widgets.ListElement, startingIndex: number) => {
+  _unfoldLines = (list: blessed.Widgets.ListElement, indexBar: blessed.Widgets.ListElement, startingIndex: number) => {
     const foldedLines = this.foldedElements.find((fe) => fe.startingIndex === startingIndex);
-    const foldedContent = foldedLines?.foldedLines.map((fe) => fe.content as unknown as blessed.Widgets.TextElement);
+    const foldedContent = foldedLines?.foldedLines.map((fe) => {
+      return fe.content as unknown as blessed.Widgets.TextElement
+    });
+    const foldedIndexes = foldedLines?.foldedLines.map((fe) => {
+      return fe.index.toString().padStart(this.width - 1) as unknown as blessed.Widgets.TextElement
+    });
 
-    if (foldedContent != undefined) {
+    if (foldedContent != undefined && foldedIndexes != undefined) {
       list.spliceItem(startingIndex, 1, ...foldedContent)
+      indexBar.spliceItem(startingIndex, 1, ...foldedIndexes)
     }
 
     this.foldedElements = this.foldedElements.filter((fe) => fe.startingIndex === startingIndex + 1);
@@ -188,5 +200,5 @@ const getMatchedClosingChar = (symbol: Char) => {
 }
 
 const getInfoBarContentString = (listIndex: number, fileName: string) => {
-  return `row: ${listIndex} (${listIndex - 1}){|}${fileName}`;
+  return `row: ${listIndex - 1} (${listIndex}){|}${fileName}`;
 }
